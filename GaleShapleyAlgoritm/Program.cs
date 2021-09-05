@@ -15,7 +15,7 @@ namespace GaleShapleyAlgoritm
         private static readonly Selector _thirdSelector = new Selector() { Key = 3 };
 
         // Дано 2 мест. С квотами на 1 и 2 места, соответственно
-        private static PollingPlace _firstPollingPlace = new PollingPlace() { Key = 1, Capacity = 2};
+        private static PollingPlace _firstPollingPlace = new PollingPlace() { Key = 1, Capacity = 1 };
         private static PollingPlace _secondPollingPlace = new PollingPlace() { Key = 2, Capacity = 2 };
 
         // Множество вариантов мест и избирателей
@@ -67,32 +67,49 @@ namespace GaleShapleyAlgoritm
                 }
 
                 // 2. Все места, которые еще не заполнены, выбирают себе по своим предпочтениям избирателей, учитывая квоту
-                foreach (var pollingPlace in _places.Where(x => x.Capacity!= 0))
+                foreach (var pollingPlace in _places.Where(x => x.Capacity != 0))
                 {
-                    var candidates = pollingPlace.OrderedPreferences.Items.Take(pollingPlace.Capacity);
-                    pollingPlace.ApprovedSelectors = candidates;
+                    // В кандидаты на участие идут все избиратели, которые постучались в место в этом раунде
+                    var candidates = pollingPlace.
+                        OrderedPreferences.Items.
+                        Where(x => x.PlaceKey == pollingPlace.Key).
+                        Take(pollingPlace.Capacity);
+
+
+                    pollingPlace.ApprovedSelectors = pollingPlace?.ApprovedSelectors?.Any() == true 
+                        ? pollingPlace.ApprovedSelectors.Union(candidates) : 
+                        candidates;
+
                     pollingPlace.Capacity -= candidates.Count();
                 }
 
                 // 3. Все избиратели, кто не вошел, идут в следующее по предпочтении место
+                foreach (var selector in _selectors)
                 {
-                    // Взять всех не вошедших избирателей
-                    // Убрать у них первое место
-                    // Обнулить PlaceKey
+                    var preferredPlace = _places.FirstOrDefault(x => x.Key == selector.PlaceKey);
 
-                    foreach (var pollingPlace in _places.Where(x => x.Capacity != 0))
+                    if (!preferredPlace.ApprovedSelectors.Contains(selector))
                     {
-                        var underScoreCandidates =
-                            pollingPlace.OrderedPreferences.Items.Where(
-                                x => !pollingPlace.ApprovedSelectors.Contains(x));
-
-                        foreach (var underScoreCandidate in underScoreCandidates)
-                        {
-                            underScoreCandidate.PlaceKey = null;
-                            underScoreCandidate.UpdatePlaces(underScoreCandidate.OrderedPreferences.Items.Skip(1).ToHashSet());
-                        }
+                        selector.PlaceKey = null;
+                        selector.UpdatePlaces(selector.OrderedPreferences.Items.Skip(1).ToHashSet());
                     }
                 }
+
+                // // 3. Все избиратели, кто не вошел, идут в следующее по предпочтении место
+                // foreach (var pollingPlace in _places.Where(x => x.Capacity != 0))
+                // {
+                //     var underScoreCandidates =
+                //         pollingPlace.OrderedPreferences.Items.
+                //             Where(x => x.PlaceKey == pollingPlace.Key).
+                //             Where(x => !pollingPlace.ApprovedSelectors.Contains(x));
+                //
+                //     foreach (var underScoreCandidate in underScoreCandidates)
+                //     {
+                //         underScoreCandidate.PlaceKey = null;
+                //         underScoreCandidate.UpdatePlaces(underScoreCandidate.OrderedPreferences.Items.Skip(1).ToHashSet());
+                //     }
+                // }
+
             }
         }
 
@@ -104,7 +121,7 @@ namespace GaleShapleyAlgoritm
             {
                 Console.WriteLine(pollingPlace.ToString());
             }
-            
+
         }
     }
 }
