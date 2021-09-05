@@ -94,22 +94,6 @@ namespace GaleShapleyAlgoritm
                         selector.UpdatePlaces(selector.OrderedPreferences.Items.Skip(1).ToHashSet());
                     }
                 }
-
-                // // 3. Все избиратели, кто не вошел, идут в следующее по предпочтении место
-                // foreach (var pollingPlace in _places.Where(x => x.Capacity != 0))
-                // {
-                //     var underScoreCandidates =
-                //         pollingPlace.OrderedPreferences.Items.
-                //             Where(x => x.PlaceKey == pollingPlace.Key).
-                //             Where(x => !pollingPlace.ApprovedSelectors.Contains(x));
-                //
-                //     foreach (var underScoreCandidate in underScoreCandidates)
-                //     {
-                //         underScoreCandidate.PlaceKey = null;
-                //         underScoreCandidate.UpdatePlaces(underScoreCandidate.OrderedPreferences.Items.Skip(1).ToHashSet());
-                //     }
-                // }
-
             }
         }
 
