@@ -8,18 +8,18 @@ namespace GaleShapleyAlgoritm.Selectors
         /// <summary>
         /// Вектор предпочтений избирателя
         /// </summary>
-        public PreferenceVector<PollingPlace> OrderedPreferences;
-        
+        public PreferenceVector<PollingPlace> OrderedPreferences { get; set; }
+
         /// <summary>
         /// Ключ избиретеля
         /// </summary>
         public int Key { get; set; }
-        
+
         /// <summary>
         /// Ключ выбранного места
         /// </summary>
         public int? PlaceKey { get; set; }
-        
+
         /// <summary>
         /// Создание избирателя
         /// </summary>
@@ -42,5 +42,20 @@ namespace GaleShapleyAlgoritm.Selectors
             Key = key;
             OrderedPreferences = new PreferenceVector<PollingPlace>(places, compareFunction);
         }
+
+        public Selector()
+        {
+        }
+
+        public void SetPlaces(ISet<PollingPlace> places, IComparer<PollingPlace> compareFunction)
+        {
+            CompareFunction = compareFunction;
+            OrderedPreferences = new PreferenceVector<PollingPlace>(places, compareFunction);
+        }
+        public void UpdatePlaces(ISet<PollingPlace> places)
+        {
+            OrderedPreferences = new PreferenceVector<PollingPlace>(places, CompareFunction);
+        }
+        private IComparer<PollingPlace> CompareFunction { get; set; }
     }
 }

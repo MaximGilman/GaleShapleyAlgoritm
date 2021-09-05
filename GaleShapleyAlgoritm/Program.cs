@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using GaleShapleyAlgoritm.PollingPlaces;
 using GaleShapleyAlgoritm.Selectors;
@@ -9,39 +10,45 @@ namespace GaleShapleyAlgoritm
     class Program
     {
         // Дано 3 избирателя
-        private static Selector _firstSelector;
-        private static Selector _secondSelector;
-        private static Selector _thirdSelector;
+        private static readonly Selector _firstSelector = new Selector() { Key = 1 };
+        private static readonly Selector _secondSelector = new Selector() { Key = 2 };
+        private static readonly Selector _thirdSelector = new Selector() { Key = 3 };
 
-        // Дано 2 мест
-        private static PollingPlace _firstPollingPlace;
-        private static PollingPlace _secondPollingPlace;
+        // Дано 2 мест. С квотами на 1 и 2 места, соответственно
+        private static PollingPlace _firstPollingPlace = new PollingPlace() { Key = 1, Capacity = 2};
+        private static PollingPlace _secondPollingPlace = new PollingPlace() { Key = 2, Capacity = 2 };
 
         // Множество вариантов мест и избирателей
-        private static readonly HashSet<PollingPlace> _places = new HashSet<PollingPlace>() { _firstPollingPlace, _secondPollingPlace };
-        private static readonly HashSet<Selector> _selectors = new HashSet<Selector>() { _firstSelector, _secondSelector, _thirdSelector };
+        private static HashSet<PollingPlace> _places;
+        private static HashSet<Selector> _selectors;
 
         static void Main(string[] args)
         {
+            _places = new HashSet<PollingPlace>() { _firstPollingPlace, _secondPollingPlace };
+            _selectors = new HashSet<Selector>() { _firstSelector, _secondSelector, _thirdSelector };
+
+
             // Каждый из избирателей имеет свой вектор предпочтений относительно мест
             // Вектор предпочтений - стандартные. Лучше считается место по ключу больше/меньше.
             // В общем случае можно описать любую кастомную функцию выбора
 
             // Первый избиратель выберет место с наибольшим ключем
-            _firstSelector = new Selector(key: 1, _places, new KeyPollingPlaceComparer());
+            _firstSelector.SetPlaces(_places, new ReverseKeyPollingPlaceComparer());
 
             // Остальные, наоборот, считают лучшим местом, место с меньшим ключем
-            _secondSelector = new Selector(key: 2, _places, new ReverseKeyPollingPlaceComparer());
-            _thirdSelector = new Selector(key: 3, _places, new ReverseKeyPollingPlaceComparer());
+            _secondSelector.SetPlaces(_places, new KeyPollingPlaceComparer());
+            _thirdSelector.SetPlaces(_places, new KeyPollingPlaceComparer());
 
 
             // Аналогично, есть векторы предпочтений для мест, а также квоты
             // Первое место имеет функцию предпочтения МАХ и квоту на 1 место, второе  функцию - MIN и 2 места по квоте
 
-            _firstPollingPlace = new PollingPlace(1, 1, _selectors, new KeySelectorComparer());
-            _secondPollingPlace = new PollingPlace(2, 2, _selectors, new ReverseKeySelectorComparer());
+            _firstPollingPlace.SetSelectors(_selectors, new ReverseKeySelectorComparer());
+            _secondPollingPlace.SetSelectors(_selectors, new KeySelectorComparer());
 
             RunAlgorithm();
+
+            Print();
         }
 
         /// <summary>
@@ -51,7 +58,7 @@ namespace GaleShapleyAlgoritm
         {
             // В текущей реализации квота == количество желающих, поэтому
             // Алгоритм завершится, когда все найдут места
-            while (_selectors.All(x => x.PlaceKey != null))
+            while (_selectors.Any(x => x?.PlaceKey == null))
             {
                 // 1. Все избиратели, которые еще не определились - идут на самое предпочтительное место
                 foreach (var selector in _selectors.Where(x => x.PlaceKey == null))
@@ -60,7 +67,7 @@ namespace GaleShapleyAlgoritm
                 }
 
                 // 2. Все места, которые еще не заполнены, выбирают себе по своим предпочтениям избирателей, учитывая квоту
-                foreach (var pollingPlace in _places.Where(x => x.ApprovedSelectors?.Count() == x.Capacity))
+                foreach (var pollingPlace in _places.Where(x => x.Capacity!= 0))
                 {
                     var candidates = pollingPlace.OrderedPreferences.Items.Take(pollingPlace.Capacity);
                     pollingPlace.ApprovedSelectors = candidates;
@@ -72,8 +79,32 @@ namespace GaleShapleyAlgoritm
                     // Взять всех не вошедших избирателей
                     // Убрать у них первое место
                     // Обнулить PlaceKey
+
+                    foreach (var pollingPlace in _places.Where(x => x.Capacity != 0))
+                    {
+                        var underScoreCandidates =
+                            pollingPlace.OrderedPreferences.Items.Where(
+                                x => !pollingPlace.ApprovedSelectors.Contains(x));
+
+                        foreach (var underScoreCandidate in underScoreCandidates)
+                        {
+                            underScoreCandidate.PlaceKey = null;
+                            underScoreCandidate.UpdatePlaces(underScoreCandidate.OrderedPreferences.Items.Skip(1).ToHashSet());
+                        }
+                    }
                 }
             }
+        }
+
+        private static void Print()
+        {
+            // Выводим значения по столбцам
+            // В заголовке пишем место, затем, все его избиратели, в порядке приоритета
+            foreach (var pollingPlace in _places)
+            {
+                Console.WriteLine(pollingPlace.ToString());
+            }
+            
         }
     }
 }

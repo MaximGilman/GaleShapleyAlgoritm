@@ -15,7 +15,7 @@ namespace GaleShapleyAlgoritm.PollingPlaces
             if (ReferenceEquals(null, x)) return -1;
             var keyComparison = x.Key.CompareTo(y.Key);
             return keyComparison != 0 ?
-                keyComparison :
+                keyComparison * -1 :
                 x.Key.CompareTo(y.Key);
         }
     }

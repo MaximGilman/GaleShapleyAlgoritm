@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using GaleShapleyAlgoritm.Selectors;
 
 namespace GaleShapleyAlgoritm.PollingPlaces
@@ -50,6 +51,22 @@ namespace GaleShapleyAlgoritm.PollingPlaces
             Key = key;
             Capacity = capacity;
             OrderedPreferences = new PreferenceVector<Selector>(selectors, compareFunction);
+        }
+
+        public PollingPlace()
+        {
+        }
+
+        public void SetSelectors(ISet<Selector> selectors, IComparer<Selector> compareFunction)
+        {
+            OrderedPreferences = new PreferenceVector<Selector>(selectors, compareFunction);
+        }
+
+        public override string ToString()
+        {
+            string orderedSelectorKeys = string.Join(",", ApprovedSelectors.Select(x => x.Key));
+            return
+                $"Place: {this.Key}, Selectors: {orderedSelectorKeys}, Count: {ApprovedSelectors.Count()}";
         }
     }
 }
