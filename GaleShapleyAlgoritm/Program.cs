@@ -19,8 +19,8 @@ namespace GaleShapleyAlgoritm
         private static PollingPlace _secondPollingPlace = new PollingPlace() { Key = 2, Capacity = 2 };
 
         // Множество вариантов мест и избирателей
-        private static HashSet<PollingPlace> _places;
-        private static HashSet<Selector> _selectors;
+        private static ISet<PollingPlace> _places;
+        private static ISet<Selector> _selectors;
 
         static void Main(string[] args)
         {
@@ -33,69 +33,26 @@ namespace GaleShapleyAlgoritm
             // В общем случае можно описать любую кастомную функцию выбора
 
             // Первый избиратель выберет место с наибольшим ключем
-            _firstSelector.SetPlaces(_places, new ReverseKeyPollingPlaceComparer());
+            _firstSelector.SetPlaces(_places, new MaxKeyPollingPlaceComparer());
 
             // Остальные, наоборот, считают лучшим местом, место с меньшим ключем
-            _secondSelector.SetPlaces(_places, new KeyPollingPlaceComparer());
-            _thirdSelector.SetPlaces(_places, new KeyPollingPlaceComparer());
+            _secondSelector.SetPlaces(_places, new MinKeyPollingPlaceComparer());
+            _thirdSelector.SetPlaces(_places, new MinKeyPollingPlaceComparer());
 
 
             // Аналогично, есть векторы предпочтений для мест, а также квоты
             // Первое место имеет функцию предпочтения МАХ и квоту на 1 место, второе  функцию - MIN и 2 места по квоте
 
-            _firstPollingPlace.SetSelectors(_selectors, new ReverseKeySelectorComparer());
-            _secondPollingPlace.SetSelectors(_selectors, new KeySelectorComparer());
+            _firstPollingPlace.SetSelectors(_selectors, new MaxKeySelectorComparer());
+            _secondPollingPlace.SetSelectors(_selectors, new MinKeySelectorComparer());
 
-            RunAlgorithm();
+            AlgorithmExecutor executor = new AlgorithmExecutor(_places, _selectors);
+            (_places, _selectors) = executor.RunAlgorithm();
 
             Print();
         }
 
-        /// <summary>
-        /// Запуск алгоритма Гейла - Шепли
-        /// </summary>
-        private static void RunAlgorithm()
-        {
-            // В текущей реализации квота == количество желающих, поэтому
-            // Алгоритм завершится, когда все найдут места
-            while (_selectors.Any(x => x?.PlaceKey == null))
-            {
-                // 1. Все избиратели, которые еще не определились - идут на самое предпочтительное место
-                foreach (var selector in _selectors.Where(x => x.PlaceKey == null))
-                {
-                    selector.PlaceKey = selector.OrderedPreferences.Items.First().Key;
-                }
 
-                // 2. Все места, которые еще не заполнены, выбирают себе по своим предпочтениям избирателей, учитывая квоту
-                foreach (var pollingPlace in _places.Where(x => x.Capacity != 0))
-                {
-                    // В кандидаты на участие идут все избиратели, которые постучались в место в этом раунде
-                    var candidates = pollingPlace.
-                        OrderedPreferences.Items.
-                        Where(x => x.PlaceKey == pollingPlace.Key).
-                        Take(pollingPlace.Capacity);
-
-
-                    pollingPlace.ApprovedSelectors = pollingPlace?.ApprovedSelectors?.Any() == true 
-                        ? pollingPlace.ApprovedSelectors.Union(candidates) : 
-                        candidates;
-
-                    pollingPlace.Capacity -= candidates.Count();
-                }
-
-                // 3. Все избиратели, кто не вошел, идут в следующее по предпочтении место
-                foreach (var selector in _selectors)
-                {
-                    var preferredPlace = _places.FirstOrDefault(x => x.Key == selector.PlaceKey);
-
-                    if (!preferredPlace.ApprovedSelectors.Contains(selector))
-                    {
-                        selector.PlaceKey = null;
-                        selector.UpdatePlaces(selector.OrderedPreferences.Items.Skip(1).ToHashSet());
-                    }
-                }
-            }
-        }
 
         private static void Print()
         {

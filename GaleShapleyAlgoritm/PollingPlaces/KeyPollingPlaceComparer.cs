@@ -6,7 +6,7 @@ namespace GaleShapleyAlgoritm.PollingPlaces
     /// Функция для выбора лучшего места для избирателя
     /// Базовая версия. Считает наилучшим, элемент с наибольшем ключем. В общем случае может быть отдельный компарер для каждого избирателя
     /// </summary>
-    public class KeyPollingPlaceComparer :IComparer<PollingPlace>
+    public class MinKeyPollingPlaceComparer :IComparer<PollingPlace>
     {
         public int Compare(PollingPlace x, PollingPlace y)
         {

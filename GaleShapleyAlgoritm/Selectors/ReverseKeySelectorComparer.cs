@@ -6,7 +6,7 @@ namespace GaleShapleyAlgoritm.Selectors
     ///  Функция для выбора лучшего избирателя с точки зрения места
     /// Базовая версия. Считает наилучшим, элемент с наименьшим ключем. В общем случае может быть отдельный компарер для каждого избирателя
     /// </summary>
-    public class ReverseKeySelectorComparer : IComparer<Selector>
+    public class MaxKeySelectorComparer : IComparer<Selector>
     {
         public int Compare(Selector x, Selector y)
         {

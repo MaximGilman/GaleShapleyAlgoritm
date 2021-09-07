@@ -36,7 +36,7 @@ namespace GaleShapleyAlgoritm.PollingPlaces
         {
             Key = key;
             Capacity = capacity;
-            OrderedPreferences = new PreferenceVector<Selector>(selectors, new KeySelectorComparer());
+            OrderedPreferences = new PreferenceVector<Selector>(selectors, new MinKeySelectorComparer());
         }
 
         /// <summary>

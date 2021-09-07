@@ -28,7 +28,7 @@ namespace GaleShapleyAlgoritm.Selectors
         public Selector(int key, ISet<PollingPlace> places)
         {
             Key = key;
-            OrderedPreferences = new PreferenceVector<PollingPlace>(places, new KeyPollingPlaceComparer());
+            OrderedPreferences = new PreferenceVector<PollingPlace>(places, new MinKeyPollingPlaceComparer());
         }
 
         /// <summary>
