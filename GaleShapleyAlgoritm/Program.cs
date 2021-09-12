@@ -27,7 +27,6 @@ namespace GaleShapleyAlgoritm
             _places = new HashSet<PollingPlace>() { _firstPollingPlace, _secondPollingPlace };
             _selectors = new HashSet<Selector>() { _firstSelector, _secondSelector, _thirdSelector };
 
-
             // Каждый из избирателей имеет свой вектор предпочтений относительно мест
             // Вектор предпочтений - стандартные. Лучше считается место по ключу больше/меньше.
             // В общем случае можно описать любую кастомную функцию выбора
